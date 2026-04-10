@@ -1,5 +1,4 @@
-"""Registered pipecheck sub-commands."""
-from pipecheck.commands.export_cmd import add_export_subparser
-from pipecheck.commands.diff_cmd import add_diff_subparser
-from pipecheck.commands.clone_cmd import add_clone_subparser
-from pipecheck.commands.profile_cmd import add_profile_subparser
+from pipecheck.commands import export_cmd, diff_cmd, profile_cmd  # noqa: F401
+from pipecheck.commands import snapshot_cmd, audit_cmd, tag_cmd  # noqa: F401
+from pipecheck.commands import summarize_cmd, schedule_cmd, annotate_cmd  # noqa: F401
+from pipecheck.commands import pin_cmd, clone_cmd, rename_cmd  # noqa: F401
