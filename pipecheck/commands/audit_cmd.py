@@ -29,9 +29,27 @@ def add_audit_subparser(subparsers: "_SubParsersAction") -> None:
     parser.set_defaults(func=audit_command)
 
 
+def _print_text_report(report) -> None:
+    """Render the audit report in human-readable text format to stdout."""
+    print(f"Audit Report — {report.dag_name}")
+    print(f"Generated : {report.generated_at}")
+    print("-" * 40)
+    for entry in report.entries:
+        print(entry)
+
+
 def audit_command(args: Namespace) -> int:
+    """Execute the audit sub-command.
+
+    Loads the DAG from *args.file*, runs the auditor, and prints the report in
+    the requested format.  Returns a non-zero exit code when ``--exit-code`` is
+    set and the DAG contains no root tasks.
+    """
     try:
         dag = DAGLoader.load_from_file(args.file)
+    except FileNotFoundError:
+        print(f"Error loading DAG: file not found: {args.file}", file=sys.stderr)
+        return 1
     except Exception as exc:  # pragma: no cover
         print(f"Error loading DAG: {exc}", file=sys.stderr)
         return 1
@@ -42,11 +60,7 @@ def audit_command(args: Namespace) -> int:
     if args.output_format == "json":
         print(json.dumps(report.to_dict(), indent=2))
     else:
-        print(f"Audit Report — {report.dag_name}")
-        print(f"Generated : {report.generated_at}")
-        print("-" * 40)
-        for entry in report.entries:
-            print(entry)
+        _print_text_report(report)
 
     if args.exit_code:
         root_entry = next(
