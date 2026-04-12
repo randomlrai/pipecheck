@@ -99,5 +99,22 @@ class TestDependCommand:
             os.unlink(solo_path)
 
     def test_exit_code_with_deps_returns_zero(self):
+        """When --exit-code is set and the task has dependencies, return 0."""
         args = _make_args(file=self.tmp.name, task="b", exit_code=True)
         assert depend_command(args) == 0
+
+    def test_ancestors_only_excludes_descendants(self, capsys):
+        """With --ancestors-only, only ancestors of the task are printed."""
+        args = _make_args(file=self.tmp.name, task="b", ancestors_only=True)
+        depend_command(args)
+        captured = capsys.readouterr()
+        assert "a" in captured.out
+        assert "c" not in captured.out
+
+    def test_descendants_only_excludes_ancestors(self, capsys):
+        """With --descendants-only, only descendants of the task are printed."""
+        args = _make_args(file=self.tmp.name, task="b", descendants_only=True)
+        depend_command(args)
+        captured = capsys.readouterr()
+        assert "c" in captured.out
+        assert "a" not in captured.out
