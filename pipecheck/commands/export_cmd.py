@@ -41,6 +41,19 @@ def add_export_subparser(subparsers: argparse._SubParsersAction) -> None:  # typ
     parser.set_defaults(func=export_command)
 
 
+def _resolve_exit_code(report: ValidationReport, strict: bool) -> int:
+    """Return the appropriate exit code based on the report and strict flag.
+
+    Returns 1 if the report contains errors, or if *strict* is enabled and
+    the report contains warnings.  Returns 0 otherwise.
+    """
+    if not report.passed:
+        return 1
+    if strict and report.has_warnings:
+        return 1
+    return 0
+
+
 def export_command(args: argparse.Namespace) -> int:
     """Execute the export sub-command.  Returns an exit code."""
     try:
@@ -68,8 +81,4 @@ def export_command(args: argparse.Namespace) -> int:
     if args.output is None:
         print(content)
 
-    if not report.passed:
-        return 1
-    if args.strict and report.has_warnings:
-        return 1
-    return 0
+    return _resolve_exit_code(report, args.strict)
