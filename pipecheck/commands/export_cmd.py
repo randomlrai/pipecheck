@@ -54,6 +54,21 @@ def _resolve_exit_code(report: ValidationReport, strict: bool) -> int:
     return 0
 
 
+def _print_summary(report: ValidationReport) -> None:
+    """Print a brief validation summary to stderr so it is always visible.
+
+    The summary is written to *stderr* to keep *stdout* clean for piped
+    output, regardless of whether --output was supplied.
+    """
+    error_count = len(report.errors)
+    warning_count = len(report.warnings)
+    status = "PASSED" if report.passed else "FAILED"
+    print(
+        f"[{status}] {error_count} error(s), {warning_count} warning(s)",
+        file=sys.stderr,
+    )
+
+
 def export_command(args: argparse.Namespace) -> int:
     """Execute the export sub-command.  Returns an exit code."""
     try:
@@ -80,5 +95,7 @@ def export_command(args: argparse.Namespace) -> int:
 
     if args.output is None:
         print(content)
+
+    _print_summary(report)
 
     return _resolve_exit_code(report, args.strict)
