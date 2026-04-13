@@ -33,6 +33,32 @@ def add_link_subparser(subparsers: argparse._SubParsersAction) -> None:
     parser.set_defaults(func=link_command)
 
 
+def _load_spec(spec_path: str) -> list[dict]:
+    """Load and parse the link spec JSON file.
+
+    Raises SystemExit with a descriptive message if the file is missing,
+    not valid JSON, or does not contain a top-level list.
+    """
+    try:
+        with open(spec_path) as fh:
+            raw = json.load(fh)
+    except FileNotFoundError:
+        print(f"error: spec file not found: {spec_path}", file=sys.stderr)
+        sys.exit(2)
+    except json.JSONDecodeError as exc:
+        print(f"error: invalid JSON in spec file: {exc}", file=sys.stderr)
+        sys.exit(2)
+
+    if not isinstance(raw, list):
+        print(
+            f"error: spec file must contain a JSON array, got {type(raw).__name__}",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+    return raw
+
+
 def link_command(args: argparse.Namespace) -> None:
     linker = DAGLinker()
 
@@ -40,8 +66,7 @@ def link_command(args: argparse.Namespace) -> None:
         dag = DAGLoader.load_from_file(dag_path)
         linker.register(dag)
 
-    with open(args.spec) as fh:
-        raw = json.load(fh)
+    raw = _load_spec(args.spec)
 
     entries = [
         LinkEntry(
