@@ -89,11 +89,17 @@ class TestDAGValidator:
         assert len(warnings) > 0
         assert any("retry" in w.lower() for w in warnings)
 
-    def test_empty_dag(self):
-        """Test validation of empty DAG."""
-        dag = DAG(name="empty_dag")
+    def test_missing_dependency_raises_error(self):
+        """Test that referencing a non-existent dependency raises a ValidationError."""
+        dag = DAG(name="missing_dep_dag")
+        task1 = Task(task_id="task1", dependencies=["nonexistent_task"])
+
+        dag.add_task(task1)
+
         validator = DAGValidator(dag)
         is_valid, errors, warnings = validator.validate()
-        
-        assert is_valid is True
-        assert len(errors) == 0
+
+        assert is_valid is False
+        assert len(errors) > 0
+        assert any(isinstance(e, ValidationError) for e in errors)
+        assert any("nonexistent_task" in str(e) for e in errors)
