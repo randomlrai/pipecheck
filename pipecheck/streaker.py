@@ -43,6 +43,11 @@ class StreakResult:
     def count(self) -> int:
         return len(self.streaks)
 
+    @property
+    def total_tasks(self) -> int:
+        """Return the total number of tasks covered across all streaks."""
+        return sum(len(s) for s in self.streaks)
+
     def __str__(self) -> str:
         longest = self.longest
         return (
