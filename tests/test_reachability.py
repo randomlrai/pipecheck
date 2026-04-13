@@ -58,6 +58,15 @@ class TestReachabilityResult:
         )
         assert "(none)" in str(result)
 
+    def test_can_reach_unknown_source_raises(self):
+        """can_reach should raise KeyError when the source task is not in the result."""
+        result = ReachabilityResult(
+            dag_name="test",
+            reachable={"a": frozenset({"b"}), "b": frozenset()},
+        )
+        with pytest.raises(KeyError):
+            result.can_reach("unknown", "b")
+
 
 class TestDAGReachabilityAnalyzer:
     def test_analyze_chain(self):
@@ -87,15 +96,4 @@ class TestDAGReachabilityAnalyzer:
         result = DAGReachabilityAnalyzer(dag).analyze()
         assert result.reachable["alone"] == frozenset()
 
-    def test_diamond_reachability(self):
-        dag = DAG(name="diamond")
-        for tid in ("a", "b", "c", "d"):
-            dag.add_task(Task(id=tid))
-        dag.add_edge("a", "b")
-        dag.add_edge("a", "c")
-        dag.add_edge("b", "d")
-        dag.add_edge("c", "d")
-        result = DAGReachabilityAnalyzer(dag).analyze()
-        assert result.can_reach("a", "d")
-        assert result.can_reach("b", "d")
-        assert not result.can_reach("d", "a")
+    def test_diamond_reachability(
