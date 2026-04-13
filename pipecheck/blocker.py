@@ -39,6 +39,10 @@ class BlockResult:
     def count(self) -> int:
         return len(self.entries)
 
+    def cascaded_count(self) -> int:
+        """Return the number of entries that were added via cascade (not directly blocked)."""
+        return sum(1 for e in self.entries if e.blocked_by is not None)
+
     def __str__(self) -> str:
         if not self.entries:
             return f"[{self.dag_name}] No blocked tasks."
