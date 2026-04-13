@@ -66,3 +66,17 @@ class DAGLinker:
             else:
                 result.resolved.append(entry)
         return result
+
+    def assert_all_resolved(self, links: List[LinkEntry]) -> None:
+        """Link and raise a LinkError if any entries could not be resolved.
+
+        Args:
+            links: The list of LinkEntry objects to resolve.
+
+        Raises:
+            LinkError: If one or more links reference unknown DAGs or tasks.
+        """
+        result = self.link(links)
+        if result.has_unresolved:
+            missing = ", ".join(str(e) for e in result.unresolved)
+            raise LinkError(f"Unresolved cross-DAG link(s): {missing}")
