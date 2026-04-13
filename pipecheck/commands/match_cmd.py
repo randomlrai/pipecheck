@@ -33,6 +33,12 @@ def add_match_subparser(subparsers: argparse._SubParsersAction) -> None:
         default=False,
         help="Exit with code 1 when no tasks match.",
     )
+    parser.add_argument(
+        "--count",
+        action="store_true",
+        default=False,
+        help="Print the number of matched tasks instead of the task details.",
+    )
     parser.set_defaults(func=match_command)
 
 
@@ -50,7 +56,9 @@ def match_command(args: argparse.Namespace) -> int:
         print(f"Match error: {exc}", file=sys.stderr)
         return 1
 
-    if args.ids_only:
+    if args.count:
+        print(len(result.task_ids))
+    elif args.ids_only:
         for tid in result.task_ids:
             print(tid)
     else:
