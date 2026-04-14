@@ -41,7 +41,14 @@ class DAGPruner:
         self._dag = dag
 
     def _reachable(self, root_ids: Set[str]) -> Set[str]:
-        """BFS/DFS to collect all task IDs reachable from *root_ids*."""
+        """BFS/DFS to collect all task IDs reachable from *root_ids*.
+
+        Raises
+        ------
+        PruneError
+            If any task ID in *root_ids* does not exist in the DAG, or if a
+            dependency referenced by a reachable task is missing.
+        """
         visited: Set[str] = set()
         stack = list(root_ids)
         while stack:
@@ -51,16 +58,35 @@ class DAGPruner:
             visited.add(tid)
             task = self._dag.get_task(tid)
             if task is None:
-                raise PruneError(f"Root task '{tid}' not found in DAG.")
+                raise PruneError(f"Task '{tid}' not found in DAG.")
             for dep in task.dependencies:
                 if dep not in visited:
                     stack.append(dep)
         return visited
 
     def prune(self, root_ids: List[str]) -> PruneResult:
-        """Return a new DAG containing only tasks reachable from *root_ids*."""
+        """Return a new DAG containing only tasks reachable from *root_ids*.
+
+        Parameters
+        ----------
+        root_ids:
+            Task IDs that serve as the entry points of the pruned DAG.  All
+            tasks that these roots depend on (transitively) are also kept.
+
+        Raises
+        ------
+        PruneError
+            If *root_ids* is empty or contains an unknown task ID.
+        """
         if not root_ids:
             raise PruneError("At least one root task ID must be supplied.")
+
+        # Validate that every requested root exists before doing any work.
+        unknown = [tid for tid in root_ids if self._dag.get_task(tid) is None]
+        if unknown:
+            raise PruneError(
+                f"Root task(s) not found in DAG: {', '.join(sorted(unknown))}"
+            )
 
         reachable = self._reachable(set(root_ids))
         all_ids = {t.task_id for t in self._dag.tasks}
