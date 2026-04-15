@@ -55,6 +55,13 @@ class StampResult:
                 return e
         return None
 
+    def to_dict(self) -> dict:
+        """Serialize the result to a plain dictionary, suitable for JSON export."""
+        return {
+            "dag_name": self.dag_name,
+            "entries": [e.to_dict() for e in self.entries],
+        }
+
     def __str__(self) -> str:
         if not self.entries:
             return f"StampResult({self.dag_name}): no stamps"
