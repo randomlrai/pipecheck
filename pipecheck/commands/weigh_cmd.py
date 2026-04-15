@@ -29,7 +29,22 @@ def add_weigh_subparser(subparsers: argparse._SubParsersAction) -> None:  # type
     parser.set_defaults(func=weigh_command)
 
 
+def _warn_no_custom_weights(weight_key: str) -> None:
+    """Print a warning when no tasks carry custom weight metadata."""
+    print(
+        f"[warn] No tasks have '{weight_key}' metadata; "
+        "default weight of 1.0 used for all tasks."
+    )
+
+
 def weigh_command(args: argparse.Namespace) -> int:
+    """Entry point for the ``weigh`` sub-command.
+
+    Loads a DAG from *args.file*, computes per-task cumulative weights using
+    *args.weight_key* as the metadata key, and prints a summary table together
+    with the heaviest task.  Returns a non-zero exit code when ``--exit-code``
+    is set and the DAG contains no custom weight metadata.
+    """
     try:
         dag = DAGLoader.load_from_file(args.file)
     except Exception as exc:  # noqa: BLE001
@@ -53,10 +68,7 @@ def weigh_command(args: argparse.Namespace) -> int:
         args.weight_key in t.metadata for t in dag.tasks.values()
     )
     if not any_custom:
-        print(
-            f"[warn] No tasks have '{args.weight_key}' metadata; "
-            "default weight of 1.0 used for all tasks."
-        )
+        _warn_no_custom_weights(args.weight_key)
         if args.exit_code:
             return 1
 
