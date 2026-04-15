@@ -55,6 +55,24 @@ class TimeoutPresenceRule(LintRule):
                 )
 
 
+class RetryPresenceRule(LintRule):
+    """All tasks should define a retry count to handle transient failures."""
+
+    def __init__(self):
+        super().__init__(
+            name="retry_presence",
+            description="All tasks should specify a retry count",
+        )
+
+    def check(self, dag: DAG, report: ValidationReport) -> None:
+        for task in dag.tasks.values():
+            if task.retries is None:
+                report.add_warning(
+                    self.name,
+                    f"Task '{task.task_id}' has no retry count defined",
+                )
+
+
 class DAGLinter:
     """Runs a collection of lint rules against a DAG."""
 
@@ -64,6 +82,7 @@ class DAGLinter:
         self.rules: List[LintRule] = [
             TaskNamingRule(),
             TimeoutPresenceRule(),
+            RetryPresenceRule(),
         ]
         if extra_rules:
             self.rules.extend(extra_rules)
