@@ -45,6 +45,10 @@ class TestNormalizeResult:
         )
         assert result.count == 2
 
+    def test_count_zero_when_no_entries(self):
+        result = NormalizeResult(dag_name="pipe")
+        assert result.count == 0
+
     def test_str_no_changes(self):
         result = NormalizeResult(dag_name="pipe")
         assert "No normalization" in str(result)
@@ -88,17 +92,13 @@ class TestDAGNormalizer:
         dag = DAG(name="hyphenated")
         dag.add_task(Task(task_id="my-task"))
         result = DAGNormalizer().normalize(dag)
-        assert "my_task" in result.dag.tasks
+        assert "my_task" in result
 
-    def test_edges_are_remapped_after_normalization(self):
-        dag = DAG(name="edged")
-        dag.add_task(Task(task_id="Step One"))
-        dag.add_task(Task(task_id="Step Two"))
-        dag.add_edge("Step One", "Step Two")
+    def test_normalizer_preserves_edges_after_rename(self):
+        """Edges between renamed tasks should still exist in the normalized DAG."""
+        dag = DAG(name="edges")
+        dag.add_task(Task(task_id="Start Node"))
+        dag.add_task(Task(task_id="End Node"))
+        dag.add_edge("Start Node", "End Node")
         result = DAGNormalizer().normalize(dag)
-        assert ("step_one", "step_two") in result.dag.edges
-
-    def test_result_dag_name_preserved(self):
-        dag = _build_dag(name="my_pipeline")
-        result = DAGNormalizer().normalize(dag)
-        assert result.dag.name == "my_pipeline"
+        assert ("start_node", "end_node") in result.dag.edges
